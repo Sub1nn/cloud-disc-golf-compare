@@ -13,6 +13,8 @@ from handle_db_connections import create_conn, read_query
 
 app = Flask(__name__)
 
+'''
+
 connection = create_conn()
 
 sql_query = """
@@ -21,9 +23,13 @@ SELECT * FROM product_table;
 
 products = read_query(connection, sql_query)
 
+'''
+
 @app.route("/")
 def home():
     return render_template('home.html')
+
+'''
 
 @app.route("/products")
 def product_grid():
@@ -58,6 +64,8 @@ def product_grid():
         selected_price_range=price_range,
         selected_speed=speed
     )
+
+'''
 
 if __name__ == "__main__":
     app.run(debug=True)
