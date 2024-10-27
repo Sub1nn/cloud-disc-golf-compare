@@ -32,10 +32,6 @@
         "bucket_location": "xxx"
     },
 
-    "appengine_service_location": {
-        "location": "xxx"
-    },
-
     "appengine_versions": [
         {
             "version_id": "xxx",

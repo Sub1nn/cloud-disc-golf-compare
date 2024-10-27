@@ -26,12 +26,6 @@ variable "appengine_bucket" {
     })
 }
 
-variable "appengine_service_location" {
-    type = object({
-        location = string
-    })
-}
-
 variable "appengine_versions" {
     type = list(object({
         version_id = string
