@@ -5,13 +5,13 @@ provider "google" {
 }
 
 module "enable_google_apis_for_app_engine" {
-    source = "/modules/enable_google_apis"
+    source = "./modules/enable_google_apis"
     project = var.general_details.project_id
     services = var.enable_google_apis.services
 }
 
 module "create_service_account_for_app_engine" {
-    source = "/modules/create_service_account"
+    source = "./modules/create_service_account"
     project = var.general_details.project_id
     service_account_display_name = var.appengine_service_account.service_account_display_name
 	roles = var.appengine_service_account.service_account_roles
@@ -19,14 +19,14 @@ module "create_service_account_for_app_engine" {
 }
 
 module "create_storage_bucket" {
-    source = "/modules/create_storage_bucket"
+    source = "./modules/create_storage_bucket"
     bucket_name = var.appengine_bucket.bucket_name
     bucket_location = var.appengine_bucket.bucket_location
     depends_on = [module.enable_google_apis_for_app_engine]
 }
 
 module "app_engine_create_standard" {
-    source = "/modules/app_engine_create_standard"
+    source = "./modules/app_engine_create_standard"
 
     for_each = {for version in var.appengine_versions : version.version_id => version} 
 
