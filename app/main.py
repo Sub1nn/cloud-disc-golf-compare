@@ -1,7 +1,15 @@
 import json
+import os
+import sys
+
 from flask import Flask, render_template, request
 
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
 from handle_db_connections import create_conn, read_query
+
 
 app = Flask(__name__)
 

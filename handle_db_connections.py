@@ -4,7 +4,7 @@ from handle_credentials import get_secret
 def create_conn():
 
     connection_host = get_secret("connection_host")
-    connection_user = get_secret("root")
+    connection_user = get_secret("connection_user")
     connection_password = get_secret("connection_password")
     connection_database = get_secret("connection_database")
 
