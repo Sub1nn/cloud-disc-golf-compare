@@ -2,8 +2,8 @@
 
 data "archive_file" "function_dist" {
 	type        = "zip"
-	source_dir  = "../../../${var.repository_name}"
-	output_path = "../../../${var.repository_name}.zip"
+	source_dir  = "./../${var.repository_name}"
+	output_path = "./../${var.repository_name}.zip"
 }
 
 resource "google_storage_bucket_object" "object" {
