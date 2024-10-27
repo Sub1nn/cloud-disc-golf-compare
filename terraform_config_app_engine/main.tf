@@ -48,5 +48,5 @@ module "app_engine_create_standard" {
     delete_service_on_destroy = each.value.delete_service_on_destroy
     service_account = module.create_service_account_for_app_engine.service_account_email
 
-    depends_on = [module.enable_google_apis_for_app_engine, module.create_service_account_for_app_engine, module.create_storage_bucket, module.enable_app_engine]
+    depends_on = [module.enable_google_apis_for_app_engine, module.create_service_account_for_app_engine, module.create_storage_bucket]
 }
