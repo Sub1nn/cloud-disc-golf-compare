@@ -40,7 +40,6 @@ resource "google_app_engine_standard_app_version" "standard_app" {
 	
 	env_variables = {
 		port = var.port
-		GOOGLE_APPLICATION_CREDENTIALS = var.db_pwd
 	}
 
 	instance_class = var.instance_class

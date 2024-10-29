@@ -41,7 +41,6 @@
             "runtime": "xxx",
             "shell": "xxx",
             "port": "xxx",
-            "db_pwd": "xxx",
             "instance_class": "xxx",
             "delete_service_on_destroy": "xxx"
         }
