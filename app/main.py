@@ -31,9 +31,11 @@ products = read_query(connection, sql_query)
 
 '''
 
+nice_value = os.getenv("MY_SECRET")
+
 @app.route("/")
 def home():
-    return print(os.getenv("MY_SECRET"))
+    return nice_value
 
 '''
 
