@@ -33,7 +33,7 @@ products = read_query(connection, sql_query)
 
 @app.route("/")
 def home():
-    return "Hello World!"
+    return print(os.getenv("db_pwd"))
 
 '''
 

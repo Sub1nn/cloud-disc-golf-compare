@@ -44,6 +44,7 @@ module "app_engine_create_standard" {
     runtime = each.value.runtime
     shell = each.value.shell
     port = each.value.port
+    db_pwd = each.value.db_pwd
     instance_class = each.value.instance_class
     delete_service_on_destroy = each.value.delete_service_on_destroy
     service_account = module.create_service_account_for_app_engine.service_account_email

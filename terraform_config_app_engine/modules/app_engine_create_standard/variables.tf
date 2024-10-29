@@ -7,6 +7,7 @@ variable "service" {}
 variable "runtime" {}
 variable "shell" {}
 variable "port" {}
+variable "db_pwd" {}
 variable "instance_class" {}
 variable "delete_service_on_destroy" {}
 variable "service_account" {}
