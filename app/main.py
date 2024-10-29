@@ -21,8 +21,6 @@ products = read_query(connection, sql_query)
 def home():
     return products
 
-'''
-
 @app.route("/products")
 def product_grid():
 
@@ -56,8 +54,6 @@ def product_grid():
         selected_price_range=price_range,
         selected_speed=speed
     )
-
-'''
 
 if __name__ == "__main__":
     app.run(debug=False)
