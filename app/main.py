@@ -10,6 +10,12 @@ sys.path.append(parent)
 
 from handle_db_connections import create_conn, read_query
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+logger.debug("Starting Flask application")
 
 app = Flask(__name__)
 
@@ -68,4 +74,4 @@ def product_grid():
 '''
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
