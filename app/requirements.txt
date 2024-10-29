@@ -5,3 +5,4 @@ python-dotenv
 lxml-html-clean
 pymysql
 gunicorn
+google-cloud-secret-manager

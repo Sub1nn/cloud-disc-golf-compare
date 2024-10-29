@@ -35,7 +35,6 @@ variable "appengine_versions" {
         runtime = string
         shell = string
         port = string
-        db_pwd = string
         instance_class  = string
         delete_service_on_destroy = bool
     }))

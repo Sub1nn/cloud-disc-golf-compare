@@ -37,10 +37,10 @@ resource "google_app_engine_standard_app_version" "standard_app" {
 	# vpc_access_connector {
 
 	# }
-
+	
 	env_variables = {
 		port = var.port
-		MY_SECRET = var.db_pwd
+		GOOGLE_APPLICATION_CREDENTIALS = var.db_pwd
 	}
 
 	instance_class = var.instance_class
