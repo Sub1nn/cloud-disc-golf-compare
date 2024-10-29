@@ -27,7 +27,7 @@ products = read_query(connection, sql_query)
 
 @app.route("/")
 def home():
-    return render_template('home.html')
+    return "Hello World!"
 
 '''
 
