@@ -19,7 +19,7 @@ products = read_query(connection, sql_query)
 
 @app.route("/")
 def home():
-    return products
+    return render_template('home.html')
 
 @app.route("/products")
 def product_grid():
