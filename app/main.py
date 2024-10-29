@@ -20,8 +20,9 @@ logger.debug("Starting Flask application")
 app = Flask(__name__)
 
 from google.cloud import secretmanager
-
+'''
 def access_secret_version(project_id, secret_id, version_id="latest"):
+
     """
     Access the payload for the given secret version if one exists. The version
     can be a version number as a string (e.g. "5") or an alias (e.g. "latest").
@@ -36,12 +37,12 @@ def access_secret_version(project_id, secret_id, version_id="latest"):
     response = client.access_secret_version(name=name)
     # Return the decoded payload.
     return response.payload.data.decode('UTF-8')
-
+'''
 # Usage example
 project_id = "durable-path-439213-p0"
 secret_id = "DB_SECRET"
-nice_value = access_secret_version(project_id, secret_id)
-
+#nice_value = access_secret_version(project_id, secret_id)
+nice_value = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
 
 
 '''
