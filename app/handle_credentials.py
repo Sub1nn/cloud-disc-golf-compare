@@ -6,7 +6,7 @@ from google.cloud import secretmanager
 
 def get_secret(secret_name):
 
-    app_env = 'local'
+    app_env = 'prod'
     
     if app_env == 'local':
         load_dotenv() 
