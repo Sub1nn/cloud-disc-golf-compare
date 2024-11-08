@@ -1,0 +1,49 @@
+{
+
+    "general_details": {
+        "path_to_service_key": "xxx",
+        "project_id": "xxx",
+        "region": "xxx"
+    },
+
+    "enable_google_apis": {
+        "services": [
+            "xxx", 
+            "xxx", 
+            "xxx", 
+            "xxx", 
+            "xxx", 
+            "xxx"
+        ]
+    },
+
+    "appengine_service_account": {
+        "service_account_display_name": "xxx",
+        "service_account_roles" : [
+            "xxx", 
+            "xxx", 
+            "xxx", 
+            "xxx"
+        ]
+    },
+
+    "appengine_bucket": {
+        "bucket_name": "xxx",
+        "bucket_location": "xxx"
+    },
+
+    "appengine_versions": [
+        {
+            "version_id": "xxx",
+            "repository_name": "xxx",
+            "service": "xxx",
+            "object_name": "xxx",
+            "runtime": "xxx",
+            "shell": "xxx",
+            "port": "xxx",
+            "instance_class": "xxx",
+            "delete_service_on_destroy": "xxx"
+        }
+    ]
+
+}

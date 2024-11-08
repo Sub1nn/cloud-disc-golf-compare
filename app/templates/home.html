@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    
+    <style>
+
+        body {
+            font-family: 'Roboto', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://udisc-parse.s3.amazonaws.com/d001d1d6415afdb470df7e9efe888d45_m_VMwLC54Eri7reBBMdDouAVUBvtpv.jpg'); /* Add the desired image URL here */
+            background-size: cover; /* Ensures the background covers the whole page */
+            background-position: center; /* Centers the background image */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
+        }
+
+        /* Dark overlay with background */
+        body::before {
+            content: '';
+            position: fixed; /* Fixed to the viewport */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.65); /* Darker overlay (65% opacity) */
+            z-index: -1; /* Ensures overlay is behind the content but above the background */
+        }
+
+        .container {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: white;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #228B22 0%, #006400 100%); /* Forest green gradient */
+            border: none;
+            color: white;
+            padding: 10px 20px; /* Smaller padding for a smaller button */
+            text-decoration: none;
+            font-size: 1em; /* Smaller font size */
+            cursor: pointer;
+            border-radius: 20px; /* Slightly rounded edges */
+            transition: all 0.3s ease; /* Smooth transition */
+            box-shadow: 0px 4px 10px rgba(34, 139, 34, 0.4); /* Soft shadow with green hue */
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #006400 0%, #004d00 100%); /* Darker forest green on hover */
+            transform: scale(1.03); /* Slightly larger on hover */
+            box-shadow: 0px 8px 15px rgba(0, 100, 0, 0.6); /* Slightly darker shadow */
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0px 0px 0px 4px rgba(34, 139, 34, 0.4); /* Green focus ring effect */
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Welcome to Disc Golf Equipment Price Comparator</h1>
+    <a href="/products" class="btn">View Product Grid</a>
+</div>
+
+</body>
+</html>
