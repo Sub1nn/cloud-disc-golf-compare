@@ -1,4 +1,6 @@
 import pymysql
+import decimal
+
 from handle_credentials import get_secret
 
 def create_conn():
@@ -12,26 +14,21 @@ def create_conn():
     
     return connection
 
-
 def read_query(connection, sql_query):
-    
     try:
-        
         with connection.cursor() as cursor:
-            
             cursor.execute(sql_query)
-
             row_headers = [x[0] for x in cursor.description]
-
             result = cursor.fetchall()
-
             json_data = []
-
             for row in result:
-                json_data.append(dict(zip(row_headers,row)))
-
+                row_dict = dict(zip(row_headers, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, decimal.Decimal):
+                        row_dict[key] = f"{float(value):.2f}" 
+                    elif isinstance(value, float):
+                        row_dict[key] = f"{value:.2f}" 
+                json_data.append(row_dict)
             return json_data
-
     finally:
-
         connection.close()

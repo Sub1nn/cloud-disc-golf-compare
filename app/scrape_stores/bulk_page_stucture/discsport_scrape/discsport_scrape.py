@@ -1,38 +1,19 @@
-import json
-import requests
 import sys
 import os
+import requests
 
-from xml.etree import ElementTree as ET
 from bs4 import BeautifulSoup
-from requests_html import HTMLSession
+from xml.etree import ElementTree as ET
 
-current = os.path.dirname(os.path.realpath(__file__))
-parent = os.path.dirname(current)
-sys.path.append(parent)
+current_directory = os.path.dirname(os.path.realpath(__file__))
+target_directory_name = 'disc_golf_equipment_price_comparator'
+while current_directory:
+    sys.path.append(current_directory)
+    if os.path.basename(current_directory) == target_directory_name:
+        break
+    current_directory = os.path.dirname(current_directory)
 
 from handle_db_connections import create_conn
-
-def get_all():
-
-    sitemap_url = "https://powergrip.fi/sitemap.xml"
-
-    response = requests.get(sitemap_url)
-
-    if response.status_code == 200:
-
-        sitemap_xml = ET.fromstring(response.content)
-        
-        urls = [
-            url_elem.text for url_elem in sitemap_xml.findall('.//{http://www.sitemaps.org/schemas/sitemap/0.9}loc')
-            if url_elem.text.startswith("https://powergrip.fi/tuote/")
-        ]
-        
-        for url in urls:
-            print(url)
-
-    else:
-        print(f"Failed to retrieve sitemap: {response.status_code}")
 
 def save_a_page():
 
@@ -40,13 +21,19 @@ def save_a_page():
 
     response = requests.get(page_url)
         
-    with open('discsport_scrape\discsport_normal_page.html', 'w', encoding='utf-8') as file:
+    with open('app\scrape_stores\discsport_scrape\discsport_normal_page.html', 'w', encoding='utf-8') as file:
         file.write(response.text)
 
 def get_page_data():
 
-    with open('discsport_scrape\discsport_normal_page.html', 'r', encoding='utf-8') as file:
-        html_content = file.read()
+    #with open('app\scrape_stores\discsport_scrape\discsport_normal_page.html', 'r', encoding='utf-8') as file:
+        #html_content = file.read()
+
+    page_url = "https://www.discsporteurope.com/en/midrange/results,1-200"
+
+    response = requests.get(page_url)
+
+    html_content = response.text
 
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -54,36 +41,37 @@ def get_page_data():
 
     all_products = []
 
-    product_articles = soup.find_all('div', class_='spacer')
+    products = soup.find_all('div', class_='spacer')
 
-    for article in product_articles:
+    for product in products:
 
-        name = article.find('h3', class_='catProductTitle').get_text(strip=True)
+        title = product.find('h3', class_='catProductTitle').get_text(strip=True)
 
-        price = article.find('span', class_='PricesalesPrice').get_text(strip=True)
+        price_element = product.find('span', class_='PricesalesPrice').get_text(strip=True).replace(' ', '')
+        numeric_value = ''.join([char for char in price_element if char.isdigit() or char == ',' or char == '.'])
+        currency_symbol = ''.join([char for char in price_element if not char.isdigit() and char != ',' and char != '.'])
+        amount = float(numeric_value.replace(",", "."))
 
         flight_ratings = {}
-        speed_tag = article.find('a', class_='flight-speed')
+        speed_tag = product.find('a', class_='flight-speed')
         flight_ratings['Speed'] = speed_tag.find('span').get_text(strip=True) if speed_tag and speed_tag.find('span') else None
-
-        glide_tag = article.find('a', class_='flight-glide')
+        glide_tag = product.find('a', class_='flight-glide')
         flight_ratings['Glide'] = glide_tag.find('span').get_text(strip=True) if glide_tag and glide_tag.find('span') else None
-
-        turn_tag = article.find('a', class_='flight-turn')
+        turn_tag = product.find('a', class_='flight-turn')
         flight_ratings['Turn'] = turn_tag.find('span').get_text(strip=True) if turn_tag and turn_tag.find('span') else None
-
-        fade_tag = article.find('a', class_='flight-fade')
+        fade_tag = product.find('a', class_='flight-fade')
         flight_ratings['Fade'] = fade_tag.find('span').get_text(strip=True) if fade_tag and fade_tag.find('span') else None
 
-        link_to_disc_tag = article.find('a')
-        link_to_disc = link_to_disc_tag['href'] if link_to_disc_tag else 'No link found'
+        link_to_disc_element = product.find('a')
+        link_to_disc = link_to_disc_element['href'] if link_to_disc_element else 'No link found'
 
-        image_tag = article.find('img', class_='browseProductImage')
-        image_url = image_tag['src'] if image_tag else 'No image found'
+        image_element = product.find('img', class_='browseProductImage')
+        image_url = image_element['src'] if image_element else 'No image found'
 
         result = {
-            'title': name.lower(),
-            'price': price,
+            'title': title,
+            'price': amount,
+            'currency': currency_symbol,
             'flight_ratings': flight_ratings,
             'link_to_disc': "https://www.discsporteurope.com" + link_to_disc,
             'image_url': "https://www.discsporteurope.com" + image_url,
@@ -99,13 +87,15 @@ def get_page_data():
     connection = create_conn()
 
     try:
+
         with connection.cursor() as cursor:
 
             sql = """
-            INSERT INTO product_table (title, price, speed, glide, turn, fade, link_to_disc, image_url, store)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO product_table (title, price, currency, speed, glide, turn, fade, link_to_disc, image_url, store)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
             price = VALUES(price),
+            currency = VALUES(currency),
             speed = VALUES(speed),
             glide = VALUES(glide),
             turn = VALUES(turn),
@@ -118,6 +108,7 @@ def get_page_data():
                 (
                     product['title'],
                     product['price'],
+                    product['currency'],
                     product['flight_ratings']['Speed'],
                     product['flight_ratings']['Glide'],
                     product['flight_ratings']['Turn'],
@@ -133,6 +124,7 @@ def get_page_data():
             connection.commit()
 
     finally:
+
         connection.close()
 
 get_page_data()
