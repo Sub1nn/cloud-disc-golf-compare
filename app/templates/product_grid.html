@@ -44,16 +44,6 @@
                     <button type="submit">Search</button>
                     <button type="button" id="clear-search">Clear Search</button>
                 </form>
-                
-                <script>
-                    document.getElementById('clear-search').addEventListener('click', function() {
-                        const searchInput = document.getElementById('search-input');
-                        searchInput.value = '';
-                        
-                        const searchForm = document.getElementById('search-form');
-                        searchForm.submit();
-                    });
-                </script>
 
                 <form action="/products" method="get" id="filter-form">
 
@@ -97,15 +87,15 @@
                         <div class="filter">
                             <div class="input-group">
                                 <label for="speed_min">Speed:</label>
-                                <input type="number" name="speed_min" id="speed_min" min="0" max="100" placeholder="Min">
-                                <input type="number" name="speed_max" id="speed_max" min="0" max="100" placeholder="Max">
+                                <input type="number" name="speed_min" id="speed_min" min="0" max="10" placeholder="Min">
+                                <input type="number" name="speed_max" id="speed_max" min="0" max="10" placeholder="Max">
                             </div>
                         </div>
                         <div class="filter">
                             <div class="input-group">
                                 <label for="glide_min">Glide:</label>
-                                <input type="number" name="glide_min" id="glide_min" min="0" max="100" placeholder="Min">
-                                <input type="number" name="glide_max" id="glide_max" min="0" max="100" placeholder="Max">
+                                <input type="number" name="glide_min" id="glide_min" min="0" max="10" placeholder="Min">
+                                <input type="number" name="glide_max" id="glide_max" min="0" max="10" placeholder="Max">
                             </div>
                         </div>
                         <div class="filter">
@@ -126,30 +116,6 @@
                         <button type="button" id="clear-filters">Clear Filters</button>
                     </form>
 
-                    <script>
-                        // Load stored values on page load
-                        document.addEventListener("DOMContentLoaded", function() {
-                            const inputs = document.querySelectorAll('input[type="number"]');
-                            inputs.forEach(input => {
-                                const storedValue = localStorage.getItem(input.name);
-                                if (storedValue) {
-                                    input.value = storedValue;
-                                }
-                                input.addEventListener('input', () => {
-                                    localStorage.setItem(input.name, input.value);
-                                });
-                            });
-                    
-                            document.getElementById('clear-filters').addEventListener('click', function() {
-                                inputs.forEach(input => {
-                                    localStorage.removeItem(input.name);
-                                    input.value = '';
-                                });
-                                document.getElementById('filter-form').submit(); 
-                            });
-                        });
-                    </script>
-                    
                 </form>
 
             </div>
@@ -185,23 +151,193 @@
 
     <div class="pagination-container" id="container2">
         <div class="pagination">
-            {% if page > 1 %}
-                <a href="{{ url_for('product_grid', **dict(request.args, page=page-1)) }}" class="pagination-link">« Previous</a>
+            {% set query_without_page = request.args.to_dict(flat=False) %}
+            {% if 'page' in query_without_page %}
+                {% set _ = query_without_page.pop('page') %}
             {% endif %}
-    
+            
+            {% if page > 1 %}
+                <a href="{{ url_for('product_grid', **dict(query_without_page, page=page-1)) }}" class="pagination-link">« Previous</a>
+            {% endif %}
+        
             {% for p in pages_to_display %}
                 {% if p == page %}
                     <span class="pagination-link current">{{ p }}</span>
                 {% else %}
-                    <a href="{{ url_for('product_grid', **dict(request.args, page=p)) }}" class="pagination-link">{{ p }}</a>
+                    <a href="{{ url_for('product_grid', **dict(query_without_page, page=p)) }}" class="pagination-link">{{ p }}</a>
                 {% endif %}
             {% endfor %}
-    
+        
             {% if page < total_pages %}
-                <a href="{{ url_for('product_grid', **dict(request.args, page=page+1)) }}" class="pagination-link">Next »</a>
+                <a href="{{ url_for('product_grid', **dict(query_without_page, page=page+1)) }}" class="pagination-link">Next »</a>
             {% endif %}
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+            // check if a parameter exists in the URL
+            function hasURLParameter(param) {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.has(param);
+            }
+
+            // restore filter, sort, and search state on page load
+            function restoreState() {
+                const elements = document.querySelectorAll('#filter-form input, #filter-form select, #search-form input');
+                elements.forEach(el => {
+                    const storedValue = localStorage.getItem(el.name + (el.value || ''));
+                    const paramExists = hasURLParameter(el.name);
+
+                    if (storedValue !== null && paramExists) {
+                        if (el.type === 'checkbox') {
+                            el.checked = storedValue === 'true';
+                        } else {
+                            el.value = storedValue;
+                        }
+                    } else {
+                        // reset to default values if parameter doesn't exist in URL
+                        if (el.type === 'checkbox') {
+                            el.checked = false;
+                        } else {
+                            el.value = '';
+                        }
+                    }
+                });
+
+                // specifically handle the sort dropdown
+                const sortSelect = document.querySelector('select[name="sort"]');
+                if (sortSelect) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const sortValue = urlParams.get('sort');
+                    if (sortValue) {
+                        sortSelect.value = sortValue; // set the selected option based on URL parameter
+                    }
+                }
+
+                // specifically handle the search input
+                const searchInput = document.querySelector('input[name="search"]');
+                if (searchInput) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const searchValue = urlParams.get('search');
+                    if (searchValue) {
+                        searchInput.value = searchValue; // set the search input value based on URL parameter
+                    }
+                }
+
+            }
+
+            // save filter, sort, and search state before actions
+            function saveState() {
+                const elements = document.querySelectorAll('#filter-form input, #filter-form select, #search-form input');
+                elements.forEach(el => {
+                    const key = el.name + (el.type === 'checkbox' ? el.value : '');
+                    const value = (el.type === 'checkbox') ? el.checked : el.value;
+                    localStorage.setItem(key, value);
+                });
+            }
+
+            // utility function to navigate with the updated query
+            function navigate(urlParams) {
+                const queryString = urlParams.toString();
+                window.location.href = window.location.pathname + (queryString ? '?' + queryString : '');
+            }
+
+            // clear search and preserve filters, sort, store
+            document.getElementById('clear-search').addEventListener('click', function(event) {
+                event.preventDefault();
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.delete('search');
+                urlParams.set('page', '1')
+                localStorage.removeItem('search');
+                navigate(urlParams);
+            });
+
+            // clear filters and preserve search, sort, store
+            document.getElementById('clear-filters').addEventListener('click', function(event) {
+                event.preventDefault();
+                const urlParams = new URLSearchParams(window.location.search);
+
+                // list of filter parameters to clear, excluding sort and store
+                ['price_min', 'price_max', 'speed_min', 'speed_max',
+                'glide_min', 'glide_max', 'turn_min', 'turn_max',
+                'fade_min', 'fade_max'].forEach(param => {
+                    urlParams.delete(param);
+                    urlParams.set('page', '1');
+                    localStorage.removeItem(param);
+                });
+
+                navigate(urlParams);
+            });
+
+            // submit filters and preserve search, sort, store
+            document.getElementById('filter-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                saveState();
+                const formData = new FormData(this);
+                const urlParams = new URLSearchParams(window.location.search);
+
+                // handle store separately to support multiple values
+                formData.getAll('store').forEach((value) => {
+                    urlParams.append('store', value);
+                });
+
+                formData.forEach((value, key) => {
+                    if (key !== 'store') {
+                        urlParams.set(key, value);
+                    }
+                });
+
+                urlParams.set('page', '1'); // reset page to 1
+                navigate(urlParams);
+            });
+
+            // update the search form submission to reset to page 1
+            document.getElementById('search-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                saveState();
+                const formData = new FormData(this);
+                const urlParams = new URLSearchParams(window.location.search);
+
+                formData.forEach((value, key) => {
+                    urlParams.set(key, value);
+                });
+
+                urlParams.set('page', '1');  // reset page to 1
+                navigate(urlParams);
+            });
+
+            // update sort change behavior to reset to page 1
+            document.querySelector('select[name="sort"]').addEventListener('change', function () {
+                saveState();
+                const urlParams = new URLSearchParams(window.location.search);
+
+                urlParams.set('sort', this.value);
+                urlParams.set('page', '1'); // reset page to 1
+                navigate(urlParams);
+            });
+
+            // ensure toggling a store checkbox resets to page 1
+            document.querySelectorAll('input[name="store"]').forEach(storeCheckbox => {
+                storeCheckbox.addEventListener('change', function () {
+                    saveState();
+                    const urlParams = new URLSearchParams(window.location.search);
+
+                    // get all selected stores
+                    const stores = Array.from(document.querySelectorAll('input[name="store"]:checked')).map(cb => cb.value);
+                    urlParams.delete('store'); // clear existing store filters
+                    stores.forEach(store => urlParams.append('store', store));
+
+                    urlParams.set('page', '1'); // reset page to 1
+                    navigate(urlParams);
+                });
+            });
+
+            restoreState(); // restore state or reset fields on page load
+            
+        });
+    </script>
 
     <script>
         function centerContainer2() {
@@ -273,12 +409,6 @@
                 }
             });
         });
-    </script>
-
-    <script>
-        function submitForm() {
-            document.getElementById("filter-form").submit();
-        }
     </script>
 
 </body>

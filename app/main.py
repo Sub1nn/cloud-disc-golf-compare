@@ -42,10 +42,6 @@ def product_grid():
     selected_stores = request.args.getlist('store')
     sort_option = request.args.get('sort', '')
 
-    # pagination parameters
-    page = request.args.get('page', 1, type=int)
-    per_page = 25
-
     unique_stores = set(product['store'] for product in products)
 
     filtered_products = products
@@ -59,7 +55,7 @@ def product_grid():
         if min_price == '':
             min_price = '0'
         if max_price == '':
-            max_price = '0'
+            max_price = '1000'
 
         try:
             min_price = float(min_price)
@@ -78,7 +74,7 @@ def product_grid():
         if min_speed == '':
             min_speed = '0'
         if max_speed == '':
-            max_speed = '0'
+            max_speed = '10'
 
         try:
             min_speed = float(min_speed)
@@ -97,7 +93,7 @@ def product_grid():
         if min_glide == '':
             min_glide = '0'
         if max_glide == '':
-            max_glide = '0'
+            max_glide = '10'
 
         try:
             min_glide = float(min_glide)
@@ -111,12 +107,12 @@ def product_grid():
 
     min_turn = request.args.get('turn_min')
     max_turn = request.args.get('turn_max')
-    if min_turn and max_turn:
+    if min_turn or max_turn:
 
         if min_turn == '':
-            min_turn = '0'
+            min_turn = '-10'
         if max_turn == '':
-            max_turn = '0'
+            max_turn = '10'
 
         try:
             min_turn = float(min_turn)
@@ -130,12 +126,12 @@ def product_grid():
 
     min_fade = request.args.get('fade_min')
     max_fade = request.args.get('fade_max')
-    if min_fade and max_fade:
+    if min_fade or max_fade:
 
         if min_fade == '':
             min_fade = '0'
         if max_fade == '':
-            max_fade = '0'
+            max_fade = '10'
         
         try:
             min_fade = float(min_fade)
@@ -177,6 +173,10 @@ def product_grid():
         filtered_products.sort(key=lambda x: float(x.get('fade', 0.0)))
     elif sort_option == 'fade_highest':
         filtered_products.sort(key=lambda x: float(x.get('fade', 0.0)), reverse=True)
+
+    # pagination parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
 
     # pagination
     total_items = len(filtered_products)
