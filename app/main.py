@@ -15,7 +15,7 @@ def product_grid():
     connection = create_conn()
 
     sql_query = """
-    SELECT * FROM product_table WHERE speed IS NOT NULL;
+    SELECT * FROM main_schema.product_table WHERE speed IS NOT NULL AND glide IS NOT NULL AND turn IS NOT NULL AND fade IS NOT NULL;
     """
     products = []
     read_products = read_query(connection, sql_query)
