@@ -16,21 +16,11 @@ while current_directory:
 
 from handle_db_connections import create_conn
 
-def save_a_page():
+def get_data_diskiundiskicesis():
 
-    page_url = "https://www.diskiundiskicesis.lv/veikals?page=1"
+    print("getting diskiundiskicesis page")
 
-    response = requests.get(page_url)
-        
-    with open(r'app\scrape_stores\bulk_page_stucture\diskiundiskicesis_scrape\diskiundiskicesis_normal_page.html', 'w', encoding='utf-8') as file:
-        file.write(response.text)
-
-def get_page_data():
-
-    #with open(r'app\scrape_stores\bulk_page_stucture\diskiundiskicesis_scrape\diskiundiskicesis_normal_page.html', 'r', encoding='utf-8') as file:
-        #html_content = file.read()
-
-    page_url = "https://www.diskiundiskicesis.lv/veikals?page=7"
+    page_url = "https://www.diskiundiskicesis.lv/veikals?page=100"
 
     response = requests.get(page_url)
 
@@ -101,10 +91,14 @@ def get_page_data():
                     flight_ratings['Turn'] = flight_rating_elements[2] 
                     flight_ratings['Fade'] = flight_rating_elements[3] 
 
-                if ',' in flight_ratings.get('Fade'):
-                    flight_ratings['Fade'] = flight_ratings.get('Fade').replace(',', '.')
                 if ',' in flight_ratings.get('Speed'):
                     flight_ratings['Speed'] = flight_ratings.get('Speed').replace(',', '.')
+                if ',' in flight_ratings.get('Glide'):
+                    flight_ratings['Glide'] = flight_ratings.get('Glide').replace(',', '.')
+                if ',' in flight_ratings.get('Turn'):
+                    flight_ratings['Turn'] = flight_ratings.get('Turn').replace(',', '.')
+                if ',' in flight_ratings.get('Fade'):
+                    flight_ratings['Fade'] = flight_ratings.get('Fade').replace(',', '.')
 
         else:
             flight_ratings['Speed'] = None
@@ -174,5 +168,3 @@ def get_page_data():
     finally:
         
         connection.close()
-
-get_page_data()

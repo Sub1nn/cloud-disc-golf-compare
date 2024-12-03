@@ -1,10 +1,10 @@
 import sys
 import os
 import requests
+import time
 
 from bs4 import BeautifulSoup
 from xml.etree import ElementTree as ET
-from requests_html import HTMLSession
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
 target_directory_name = 'disc_golf_equipment_price_comparator'
@@ -16,11 +16,11 @@ while current_directory:
 
 from handle_db_connections import create_conn
 
-def get_all_pages():
+def get_all_pages_latitude64():
 
     all_urls = []
-
-    sitemap_url = "https://powergrip.fi/sitemap.xml"
+    
+    sitemap_url = "https://latitude64.com/sitemap_products_1.xml?from=2008270274629&to=9570245083483"
 
     response = requests.get(sitemap_url)
 
@@ -30,94 +30,63 @@ def get_all_pages():
         
         urls = [
             url_elem.text for url_elem in sitemap_xml.findall('.//{http://www.sitemaps.org/schemas/sitemap/0.9}loc')
-            if url_elem.text.startswith("https://powergrip.fi/tuote/")
         ]
         
         for url in urls:
-            all_urls.append(url)
+            if url != "https://latitude64.com/":
+                all_urls.append(url)
 
     else:
         print(f"Failed to retrieve sitemap: {response.status_code}")
 
     return all_urls
 
-def save_a_page_for_testing():
-
-    page_url = "https://powergrip.fi/tuote/opdiam/latitude-64-opto-diamond"
-
-    session = HTMLSession()
-
-    response = session.get(page_url)
-
-    response.html.render(sleep = 1)
-    
-    html_content = response.html.html
-        
-    with open('app\scrape_stores\single_page_structure\powergrip_scrape\powergrip_normal_page.html', 'w', encoding='utf-8') as file:
-        file.write(html_content)
-
-def get_page_data(all_urls):
-
-    #with open('app\scrape_stores\single_page_structure\powergrip_scrape\powergrip_normal_page.html', 'r', encoding='utf-8') as file:
-        #html_content = file.read()
+def get_data_latitude64(all_urls):
 
     connection = create_conn()
 
     for url in all_urls:
 
+        print("getting latitude64 page")
+
         page_url = url
-        session = HTMLSession()
-        response = session.get(page_url)
-        response.html.render(timeout = 20, sleep = 1)
-        html_content = response.html.html
+        html_content = requests.get(page_url).text
+        time.sleep(1)
         soup = BeautifulSoup(html_content, 'html.parser')
 
         ############################################################################################
 
-        title_element = soup.find('div', class_='product-title')
+        title_element = soup.find('h1', class_='product-info__title h2')
         title = title_element.get_text(strip=True)  
 
-        if soup.find('div', class_='price-tag offer-price'):
-            product_element = soup.find('div', class_='price-tag offer-price')
-            price = product_element.get_text(strip=True)
-        else:
-            product_element = soup.find('div', class_='price-tag normal-price')
-            price = product_element.get_text(strip=True)
+        price_element = soup.find('sale-price')
+        for sr_span in price_element.find_all('span', class_='sr-only'):
+            sr_span.decompose()
+        price = price_element.get_text(strip=True)
         price = price.replace(' ', '')
         numeric_value = ''.join(char for char in price if char.isdigit() or char in ',.')
-        currency_symbol = ''.join(char for char in price if not char.isdigit() and char not in ',.').replace("$", "€")
-
-        '''
+        currency_symbol = ''.join(char for char in price if not char.isdigit() and char not in ',.').replace("$", "€").replace("USD", "")
         
-        ul_element = soup.find('ul', {'id': 'stock-in-store-tabs'})
-
-        if ul_element:
-
-            check_icons = ul_element.find_all('i', {'class': 'fa fa-check fa-fw text-pg-lime'})
-
-            # Determine if any such elements exist
-            available = len(check_icons) > 0
-
-            # Now `available` will be True if any such <i> elements are found
-            print(available)
-
-        '''
-        
-        ratings_element = soup.find('div', class_='product-flight-ratings')
         flight_ratings = {}
-        translation_map = {
-            'Nopeus': 'Speed',
-            'Liito': 'Glide',
-            'Vakaus': 'Turn',
-            'Feidi': 'Fade'
-        }
-        for li in ratings_element.find_all('li'):
-            rating_label = li.find('span', class_='label').get_text(strip=True)
-            ratings_value = li.find('span', class_='value').get_text(strip=True)
-            translated_label = translation_map.get(rating_label, rating_label) 
-            flight_ratings[translated_label] = ratings_value
+        ratings_element = soup.find('div', class_='product-metafields')
+        if ratings_element:
+            if len(ratings_element.find_all('div')) != 0:
+                for div in ratings_element.find_all('div'):
+                    rating_label = div.find('h4').get_text(strip=True) if div and div.find('h4') else None
+                    rating_value = div.find('p').get_text(strip=True) if div and div.find('p') else None
+                    flight_ratings[rating_label] = rating_value
+            else:
+                flight_ratings['Speed'] = None
+                flight_ratings['Glide'] = None
+                flight_ratings['Turn'] = None
+                flight_ratings['Fade'] = None
+        else:
+            flight_ratings['Speed'] = None
+            flight_ratings['Glide'] = None
+            flight_ratings['Turn'] = None
+            flight_ratings['Fade'] = None
 
-        image_element = soup.find('img', class_='product-main-image img-fluid')
+        image_element = soup.find('img', class_='rounded')
         image_url = image_element['src']
 
         ############################################################################################
@@ -129,10 +98,8 @@ def get_page_data(all_urls):
             'flight_ratings': flight_ratings,
             'link_to_disc': page_url,
             'image_url': image_url,
-            'store': "powergrip.fi"
+            'store': "latitude64.com"
         }
-
-        print(product)
 
         ############################################################################################
 
@@ -171,6 +138,3 @@ def get_page_data(all_urls):
             connection.commit()
 
     connection.close()
-
-all_urls = get_all_pages()
-get_page_data(all_urls)
