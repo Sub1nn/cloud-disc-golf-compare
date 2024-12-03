@@ -1,6 +1,7 @@
 import sys
 import os
 import requests
+import time
 
 from bs4 import BeautifulSoup
 from xml.etree import ElementTree as ET
@@ -68,6 +69,7 @@ def get_data_powergrip(all_urls):
         response = session.get(page_url)
         response.html.render(timeout = 20, sleep = 1)
         html_content = response.html.html
+        time.sleep(1)
         soup = BeautifulSoup(html_content, 'html.parser')
 
         ############################################################################################
