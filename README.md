@@ -22,3 +22,9 @@ Given the growth in the sport, there are currently multiple disc golf equipment 
 This will enables site visitors to easily search, filter, and compare products between the resellers to make the best choice.
 
 **To access the project, please visit the following site: https://gardsgids.com/**
+
+From a technical and architectural perspective, the process is as follows:
+
+* The product information from different sources is collected by executing the perform_data_update.py file, which will execute functions to read data from different stores, normalize it, and store it in a MySQL database hosted on Google Cloud.
+* Then, in main.py, the data is read and rendered into the front-end using templating and Flask, a web application library. The front-end utilizes HTML, CSS, and JavaScript embedded within the HTML.
+* For deploying the web application to the internet, a Google Cloud native service called Google App Engine is used. With the help of Terraform, all necessary Google App Engine accesses and related services are set up. Terraform can also automatically deploy a new version of the web application based on the latest version in the repository to the Google App Engine. All service configurations and web application deployment settings are defined in the example_configuration.json file, which is used to populate the Terraform modules.
