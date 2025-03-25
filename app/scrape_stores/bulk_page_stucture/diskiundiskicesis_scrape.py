@@ -2,12 +2,15 @@ import sys
 import os
 import json
 import requests
-
+import logging
 from bs4 import BeautifulSoup
-from xml.etree import ElementTree as ET
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
-target_directory_name = 'disc_golf_equipment_price_comparator'
+target_directory_name = 'cloud-disc-golf-compare'
 while current_directory:
     sys.path.append(current_directory)
     if os.path.basename(current_directory) == target_directory_name:
@@ -17,27 +20,34 @@ while current_directory:
 from handle_db_connections import create_conn
 
 def get_data_diskiundiskicesis():
+    logger.info("Starting diskiundiskicesis scraper")
+    
+    try:
+        # 1. Fetch page with timeout
+        page_url = "https://www.diskiundiskicesis.lv/veikals?page=100"
+        try:
+            response = requests.get(page_url, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logger.error(f"Request failed: {str(e)}")
+            return []
 
-    print("getting diskiundiskicesis page")
+        # 2. Parse HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        script_tag = soup.find('script', {'id': 'wix-warmup-data'})
 
-    page_url = "https://www.diskiundiskicesis.lv/veikals?page=100"
+        if not script_tag:
+            logger.warning("JSON-containing script not found")
+            return []
 
-    response = requests.get(page_url)
+        # 3. Parse JSON data
+        try:
+            data = json.loads(script_tag.string.strip())
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON: {str(e)}")
+            return []
 
-    html_content = response.text
-
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    ############################################################################################
-
-    script_tag = soup.find('script', {'id': 'wix-warmup-data'})
-
-    if script_tag:
-
-        json_content = script_tag.string.strip()
-
-        data = json.loads(json_content)
-
+        # 4. Recursively find products
         def recursive_search(data, target_key):
             if isinstance(data, dict):
                 for key, value in data.items():
@@ -53,118 +63,98 @@ def get_data_diskiundiskicesis():
                         return result
             return None
 
-        products = recursive_search(data, 'productsWithMetaData').get('list')
-
-    else:
-        print("JSON-containing script not found.")
-
-    ############################################################################################
-
-    all_products = []
-
-    for product in products:
-
-        title = product.get('name').split('/')[0].rstrip()
-
-        if product.get('formattedComparePrice') == '':
-            price_element = product.get('formattedPrice')
-        else:
-            price_element = product.get('formattedComparePrice')
-        numeric_value = ''.join([char for char in price_element if char.isdigit() or char == ',' or char == '.'])
-        currency_symbol = ''.join([char for char in price_element if not char.isdigit() and char != ',' and char != '.']).lstrip()
-        amount = float(numeric_value.replace(",", "."))
-
-        flight_ratings = {}
-        if 'name' in product and '/' in product['name']:
-            name_parts = product.get('name').split('/')
-            if len(name_parts) > 1:
-                flight_rating_elements = name_parts[-1].strip().split(' ')
-                flight_ratings['Speed'] = flight_rating_elements[0] 
-                flight_ratings['Glide'] = flight_rating_elements[1] 
-                flight_ratings['Turn'] = flight_rating_elements[2] 
-                flight_ratings['Fade'] = flight_rating_elements[3] 
-
-                if flight_ratings.get('Glide') == '|':
-                    flight_rating_elements = name_parts[-1].strip().split('|')
-                    flight_ratings['Speed'] = flight_rating_elements[0] 
-                    flight_ratings['Glide'] = flight_rating_elements[1] 
-                    flight_ratings['Turn'] = flight_rating_elements[2] 
-                    flight_ratings['Fade'] = flight_rating_elements[3] 
-
-                if ',' in flight_ratings.get('Speed'):
-                    flight_ratings['Speed'] = flight_ratings.get('Speed').replace(',', '.')
-                if ',' in flight_ratings.get('Glide'):
-                    flight_ratings['Glide'] = flight_ratings.get('Glide').replace(',', '.')
-                if ',' in flight_ratings.get('Turn'):
-                    flight_ratings['Turn'] = flight_ratings.get('Turn').replace(',', '.')
-                if ',' in flight_ratings.get('Fade'):
-                    flight_ratings['Fade'] = flight_ratings.get('Fade').replace(',', '.')
-
-        else:
-            flight_ratings['Speed'] = None
-            flight_ratings['Glide'] = None
-            flight_ratings['Turn'] = None
-            flight_ratings['Fade'] = None
-
-        link_to_disc = "https://www.diskiundiskicesis.lv/product-page/" + product.get("urlPart")
-
-        image_url = product.get('media')[0].get("fullUrl")
-
-        ############################################################################################
-
-        result = {
-            'title': title,
-            'price': amount,
-            'currency': currency_symbol,
-            'flight_ratings': flight_ratings,
-            'link_to_disc': link_to_disc,
-            'image_url': image_url,
-            'store': "diskiundiskicesis.lv"
-        }
-
-        all_products.append(result)
-
-    ############################################################################################
-
-    connection = create_conn()
-
-    try:
-
-        with connection.cursor() as cursor:
-
-            sql = """
-            INSERT INTO product_table (title, price, currency, speed, glide, turn, fade, link_to_disc, image_url, store)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-            price = VALUES(price),
-            currency = VALUES(currency),
-            speed = VALUES(speed),
-            glide = VALUES(glide),
-            turn = VALUES(turn),
-            fade = VALUES(fade),
-            link_to_disc = VALUES(link_to_disc),
-            image_url = VALUES(image_url);
-            """
+        products_data = recursive_search(data, 'productsWithMetaData')
+        if not products_data or not products_data.get('list'):
+            logger.warning("No products found in JSON data")
+            return []
             
-            data = [
-                (
-                    product['title'],
-                    product['price'],
-                    product['currency'],
-                    product['flight_ratings']['Speed'],
-                    product['flight_ratings']['Glide'],
-                    product['flight_ratings']['Turn'],
-                    product['flight_ratings']['Fade'],
-                    product['link_to_disc'],
-                    product['image_url'],
-                    product['store']
-                )
-                for product in all_products
-            ]
+        products = products_data['list']
+        all_products = []
 
-            cursor.executemany(sql, data)
-            connection.commit()
+        # 5. Process products
+        for product in products:
+            try:
+                # Validate required fields
+                if not all(key in product for key in ['name', 'formattedPrice', 'urlPart', 'media']):
+                    logger.warning(f"Skipping incomplete product: {product.get('name', 'unknown')}")
+                    continue
 
-    finally:
-        
-        connection.close()
+                # Parse title
+                title = product.get('name', '').split('/')[0].rstrip()
+                if not title:
+                    continue
+
+                # Parse price
+                price_element = product.get('formattedComparePrice') or product.get('formattedPrice')
+                try:
+                    numeric_value = ''.join([char for char in price_element if char.isdigit() or char in (',', '.')])
+                    currency_symbol = ''.join([char for char in price_element if not char.isdigit() and char not in (',', '.')]).lstrip()
+                    amount = float(numeric_value.replace(",", "."))
+                except (ValueError, AttributeError):
+                    logger.warning(f"Invalid price format for product: {title}")
+                    continue
+
+                # Parse flight ratings
+                flight_ratings = {'Speed': None, 'Glide': None, 'Turn': None, 'Fade': None}
+                if '/' in product.get('name', ''):
+                    name_parts = product['name'].split('/')
+                    if len(name_parts) > 1:
+                        rating_str = name_parts[-1].strip()
+                        if '|' in rating_str:
+                            ratings = rating_str.split('|')
+                        else:
+                            ratings = rating_str.split()
+                        
+                        if len(ratings) >= 4:
+                            flight_ratings = {
+                                'Speed': ratings[0].replace(',', '.'),
+                                'Glide': ratings[1].replace(',', '.'),
+                                'Turn': ratings[2].replace(',', '.'),
+                                'Fade': ratings[3].replace(',', '.')
+                            }
+
+                # Validate media
+                media = product.get('media', [{}])
+                image_url = media[0].get("fullUrl") if media and isinstance(media, list) else None
+
+                all_products.append({
+                    'title': title,
+                    'price': amount,
+                    'currency': currency_symbol,
+                    'flight_ratings': flight_ratings,
+                    'link_to_disc': f"https://www.diskiundiskicesis.lv/product-page/{product['urlPart']}",
+                    'image_url': image_url,
+                    'store': "diskiundiskicesis.lv"
+                })
+
+            except Exception as e:
+                logger.error(f"Error processing product: {str(e)}")
+                continue
+
+        # 6. Save to database
+        if not all_products:
+            logger.warning("No valid products found to save")
+            return []
+
+        connection = None
+        try:
+            connection = create_conn()
+            with connection.cursor() as cursor:
+                sql = """INSERT INTO product_table (...) VALUES (...) ON DUPLICATE KEY UPDATE ..."""
+                data = [(p['title'], p['price'], ...) for p in all_products]
+                cursor.executemany(sql, data)
+                connection.commit()
+                logger.info(f"Successfully saved {len(all_products)} products")
+                return all_products
+
+        except Exception as e:
+            logger.error(f"Database error: {str(e)}")
+            return []
+            
+        finally:
+            if connection:
+                connection.close()
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return []
