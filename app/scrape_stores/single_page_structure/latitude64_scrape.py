@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from xml.etree import ElementTree as ET
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
-target_directory_name = 'disc_golf_equipment_price_comparator'
+target_directory_name = 'cloud-disc-golf-compare'
 while current_directory:
     sys.path.append(current_directory)
     if os.path.basename(current_directory) == target_directory_name:
