@@ -14,7 +14,7 @@ def get_secret(secret_name):
     
     elif app_env == 'prod':
         client = secretmanager.SecretManagerServiceClient()
-        name = f"projects/durable-path-439213-p0/secrets/{secret_name}/versions/latest"
+        name = f"projects/723088682483/secrets/{secret_name}/versions/latest"
         response = client.access_secret_version(name=name)
         return response.payload.data.decode('UTF-8')
     

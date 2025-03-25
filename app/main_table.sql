@@ -1,6 +1,8 @@
+USE disc_golf_db;
+
 CREATE TABLE product_table (
     title VARCHAR(255),
-    price DECIMAL(10, 2)
+    price DECIMAL(10, 2),
     currency VARCHAR(5),
     speed DECIMAL(3, 1),
     glide DECIMAL(3, 1),
