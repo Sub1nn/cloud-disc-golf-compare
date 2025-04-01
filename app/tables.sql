@@ -1,6 +1,7 @@
 USE disc_golf_db;
 
 CREATE TABLE product_table (
+    unique_id VARCHAR(256),
     title VARCHAR(255),
     price DECIMAL(10, 2),
     currency VARCHAR(5),
@@ -11,5 +12,13 @@ CREATE TABLE product_table (
     link_to_disc VARCHAR(255),
     image_url VARCHAR(255),
     store VARCHAR(255),
-    PRIMARY KEY (title, store)
+    PRIMARY KEY (unique_id)
+);
+
+CREATE TABLE users (
+    id VARCHAR(255),
+    e_mail VARCHAR(255),
+    picture_url VARCHAR(255),
+    product_history JSON,
+    PRIMARY KEY (id)
 );

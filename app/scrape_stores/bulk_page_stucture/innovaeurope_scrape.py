@@ -1,17 +1,14 @@
 import sys
 import os
 import requests
+import hashlib
 
 from bs4 import BeautifulSoup
 from xml.etree import ElementTree as ET
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
-target_directory_name = 'disc_golf_equipment_price_comparator'
-while current_directory:
-    sys.path.append(current_directory)
-    if os.path.basename(current_directory) == target_directory_name:
-        break
-    current_directory = os.path.dirname(current_directory)
+app_directory = os.path.abspath(os.path.join(current_directory, '..', '..'))
+sys.path.append(app_directory)
 
 from handle_db_connections import create_conn
 
@@ -25,7 +22,7 @@ def get_data_discsport():
 
         print("getting discsport page")
 
-        page_url = f"https://www.discsporteurope.com/en/{url_placeholder}/results,1-400"
+        page_url = f"https://www.innovaeurope.com/en/{url_placeholder}/results,1-400"
 
         response = requests.get(page_url)
 
@@ -35,11 +32,11 @@ def get_data_discsport():
 
         ############################################################################################
 
-        products = soup.find_all('div', class_='spacer')
+        products = soup.find_all('div', class_='product product-grid-view col-6 col-sm-6 col-md-4 col-lg-3')
 
         for product in products:
 
-            title = product.find('h3', class_='catProductTitle').get_text(strip=True)
+            title = product.find('h3', class_='product-name text-center m-0 mb-2').get_text(strip=True)
 
             price_element = product.find('span', class_='PricesalesPrice').get_text(strip=True).replace(' ', '')
             numeric_value = ''.join([char for char in price_element if char.isdigit() or char == ',' or char == '.'])
@@ -59,18 +56,24 @@ def get_data_discsport():
             link_to_disc_element = product.find('a')
             link_to_disc = link_to_disc_element['href'] if link_to_disc_element else 'No link found'
 
-            image_element = product.find('img', class_='browseProductImage')
-            image_url = image_element['src'] if image_element else 'No image found'
+            image_element = product.find('img')
+            image_url = image_element['data-src'] if image_element else 'No image found'
 
             result = {
                 'title': title,
                 'price': amount,
                 'currency': currency_symbol,
                 'flight_ratings': flight_ratings,
-                'link_to_disc': "https://www.discsporteurope.com" + link_to_disc,
-                'image_url': "https://www.discsporteurope.com" + image_url,
-                'store': "discsporteurope.com"
+                'link_to_disc': "https://www.innovaeurope.com" + link_to_disc,
+                'image_url': "https://www.innovaeurope.com" + image_url,
+                'store': "innovaeurope.com"
             }
+
+            combined = f"{result.get('title')}_{result.get('store')}"
+            combined = combined.lower().replace(' ', '')
+            unique_id = hashlib.sha256(combined.encode()).hexdigest()
+
+            result["unique_id"] = unique_id
 
             all_products.append(result)
 
@@ -83,9 +86,10 @@ def get_data_discsport():
         with connection.cursor() as cursor:
 
             sql = """
-            INSERT INTO product_table (title, price, currency, speed, glide, turn, fade, link_to_disc, image_url, store)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO product_table (unique_id, title, price, currency, speed, glide, turn, fade, link_to_disc, image_url, store)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
+            unique_id = VALUES(unique_id),
             price = VALUES(price),
             currency = VALUES(currency),
             speed = VALUES(speed),
@@ -98,6 +102,7 @@ def get_data_discsport():
             
             data = [
                 (
+                    product['unique_id'],
                     product['title'],
                     product['price'],
                     product['currency'],

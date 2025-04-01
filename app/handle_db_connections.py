@@ -14,21 +14,29 @@ def create_conn():
     
     return connection
 
-def read_query(connection, sql_query):
+def execute_insert(connection, query, statement):
+    cursor = connection.cursor()
     try:
-        with connection.cursor() as cursor:
-            cursor.execute(sql_query)
-            row_headers = [x[0] for x in cursor.description]
-            result = cursor.fetchall()
-            json_data = []
-            for row in result:
-                row_dict = dict(zip(row_headers, row))
-                for key, value in row_dict.items():
-                    if isinstance(value, decimal.Decimal):
-                        row_dict[key] = f"{float(value):.2f}" 
-                    elif isinstance(value, float):
-                        row_dict[key] = f"{value:.2f}" 
-                json_data.append(row_dict)
-            return json_data
+        cursor.executemany(query, statement)
+        connection.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        connection.rollback()
     finally:
+        cursor.close()
+        connection.close()
+
+def execute_select(connection, query, params=None):
+    cursor = connection.cursor()
+    try:
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        results = cursor.fetchall()
+        row_headers = [x[0] for x in cursor.description]
+        json_data = [dict(zip(row_headers, row)) for row in results]
+        return json_data
+    finally:
+        cursor.close()
         connection.close()

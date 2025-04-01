@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disc Golf Master</title>
@@ -16,20 +15,46 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/info_popup.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/pagination.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/sidebar.css') }}">
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='css_home/google_button.css') }}">
 </head>
-
 <body>
-
     <h1 style="text-align: center;"><a href="/products" class="card-link">Disc Golf Master</a></h1>
 
-    <div class="center-containers-page"><button id="infoButton", style="margin-bottom: 20px;">Information</button></div>
-    <div id="infoBackdrop" class="hidden">
-        <div id="infoPopup" class="popupContent">
+    <div class="center-containers-page">
+        <button id="infoButton" class="custombutton" style="margin-bottom: 20px;">Information</button>
+    </div>
+    <div id="infoBackdrop">
+        <div class="popupContent">
             <span id="popupClose">&times;</span>
             <h3>Information</h3>
-            <p>This page is part of a project at LUT University, within the scope of the CT70A9800 Full Stack Development course.</p>
+            <p>This page is part of a project at LUT University, within the scope of the CT70A9700 Cloud Services and Infrastructure course.</p>
         </div>
+    </div>
+    
+    <div class="top-right-div">
+        {% if 'google_token' not in session %}
+            <a href="/login">
+                <button class="gsi-material-button">
+                    <div class="gsi-material-button-state"></div>
+                    <div class="gsi-material-button-content-wrapper">
+                        <div class="gsi-material-button-icon">
+                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
+                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                                <path fill="none" d="M0 0h48v48H0z"></path>
+                            </svg>
+                        </div>
+                        <span class="gsi-material-button-contents">Sign in with Google</span>
+                        <span style="display: none;">Sign in with Google</span>
+                    </div>
+                </button>
+            </a>
+        {% else %}
+            <a href="/profile"><button type="button" class="custombutton">My Profile</button></a>
+            <a href="/logout"><button type="button" class="custombutton">Log Out</button></a>
+        {% endif %}
     </div>
     
     <div class="main-container">
@@ -41,8 +66,8 @@
                 <form action="/products" method="get" id="search-form">
                     <h3>Search:</h3>
                     <input type="text" name="search" id="search-input" placeholder="Search for products..." value="{{ search_query }}">
-                    <button type="submit">Search</button>
-                    <button type="button" id="clear-search">Clear Search</button>
+                    <button type="submit" class="custombutton">Search</button>
+                    <button type="button" id="clear-search" class="custombutton">Clear Search</button>
                 </form>
 
                 <form action="/products" method="get" id="filter-form">
@@ -112,8 +137,8 @@
                                 <input type="number" name="fade_max" id="fade_max" min="0" max="10" placeholder="Max">
                             </div>
                         </div>
-                        <button type="submit">Submit</button>
-                        <button type="button" id="clear-filters">Clear Filters</button>
+                        <button type="submit" class="custombutton">Submit</button>
+                        <button type="button" id="clear-filters" class="custombutton">Clear Filters</button>
                     </form>
 
                 </form>
@@ -123,30 +148,30 @@
 
         <div class="container" id="container1">
             {% for product in products %}
-            <a href="{{ product.link_to_disc }}" class="card-link">
                 <div class="card">
-        
-                    <img src="{{ product.image_url }}" alt="{{ product.title }}" onerror="this.src='/static/placeholder.svg';">
-                    <h2>{{ product.title }}</h2>
-                    <h3>Price: {{ product.price }}{{ product.currency }}</h3>
-        
-                    {% if product.speed is not none or product.glide is not none or product.turn is not none or product.fade is not none %}
-                    <div class="flight-ratings">
-                        <strong>Flight Ratings:</strong><br>
-                        Speed: <span class="speed">{{ product.speed if product.speed is not none else 'N/A' }}</span>, 
-                        Glide: <span class="glide">{{ product.glide if product.glide is not none else 'N/A' }}</span>, 
-                        Turn: <span class="turn">{{ product.turn if product.turn is not none else 'N/A' }}</span>, 
-                        Fade: <span class="fade">{{ product.fade if product.fade is not none else 'N/A' }}</span>
-                    </div>
-                    {% endif %}
+                    <a href="{{ product.link_to_disc }}" class="card-link">
+                        <img src="{{ product.image_url }}" alt="{{ product.title }}" onerror="this.src='/static/placeholder.svg';">
+                        <h2>{{ product.title }}</h2>
+                        <h3>Price: {{ product.price }}{{ product.currency }}</h3>
+                        
+                        {% if product.speed is not none or product.glide is not none or product.turn is not none or product.fade is not none %}
+                        <div class="flight-ratings">
+                            <strong>Flight Ratings:</strong><br>
+                            Speed: <span class="speed">{{ product.speed if product.speed is not none else 'N/A' }}</span>, 
+                            Glide: <span class="glide">{{ product.glide if product.glide is not none else 'N/A' }}</span>, 
+                            Turn: <span class="turn">{{ product.turn if product.turn is not none else 'N/A' }}</span>, 
+                            Fade: <span class="fade">{{ product.fade if product.fade is not none else 'N/A' }}</span>
+                        </div>
+                        {% endif %}
 
-                    <p>Store: {{ product.store }}</p>
-                    
+                        <p>Store: {{ product.store }}</p>
+                    </a>
+                    {% if 'google_token' in session %}
+                        <button class="custombutton wishlist-button">Add to Wishlist</button>
+                    {% endif %}
                 </div>
-            </a>
             {% endfor %}
         </div>
-        
     </div>
 
     <div class="pagination-container" id="container2">
@@ -358,58 +383,98 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const products = {{ products | tojson | safe }};
-
-            function formatNumber(number) {
-                if (number === null || number === undefined) {
-                    return "N/A"; 
-                }
-                return number % 1 === 0 ? number.toFixed(0) : number.toFixed(1);
-            }
-
-            Array.from(document.querySelectorAll('.card')).forEach((card, index) => {
-                const product = products[index];
-
-                if (product) {
-                    const speedElem = card.querySelector('.speed');
-                    const glideElem = card.querySelector('.glide');
-                    const turnElem = card.querySelector('.turn');
-                    const fadeElem = card.querySelector('.fade');
-
-                    if (speedElem) speedElem.textContent = formatNumber(product.speed);
-                    if (glideElem) glideElem.textContent = formatNumber(product.glide);
-                    if (turnElem) turnElem.textContent = formatNumber(product.turn);
-                    if (fadeElem) fadeElem.textContent = formatNumber(product.fade);
-                }
-            });
-        });
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
             const infoButton = document.getElementById('infoButton');
             const infoBackdrop = document.getElementById('infoBackdrop');
             const popupClose = document.getElementById('popupClose');
-
+        
             infoButton.addEventListener('click', () => {
+                infoBackdrop.classList.remove('hidden');
                 infoBackdrop.classList.add('active');
                 document.body.style.overflow = 'hidden';
             });
-
-            popupClose.addEventListener('click', () => {
+        
+            function closePopup() {
                 infoBackdrop.classList.remove('active');
-                setTimeout(() => {
-                    document.body.style.overflow = '';
-                }, 300); 
-            });
-
+                infoBackdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        
+            popupClose.addEventListener('click', closePopup);
+        
             infoBackdrop.addEventListener('click', (event) => {
                 if (event.target === infoBackdrop) {
-                    popupClose.click();
+                    closePopup();
                 }
             });
         });
     </script>
 
+    {% if 'google_token' in session %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const products = {{ products | tojson | safe }};
+
+            Array.from(document.querySelectorAll('.card')).forEach((card, index) => {
+                const product = products[index];
+                if (product) {
+                    card.setAttribute('data-product', JSON.stringify({
+                        id: product.id,
+                        title: product.title,
+                        speed: product.speed,
+                        glide: product.glide,
+                        turn: product.turn,
+                        fade: product.fade
+                    }));
+
+                    const wishlistButton = card.querySelector('.wishlist-button');
+                    if (wishlistButton) {
+                        wishlistButton.addEventListener('click', function() {
+                            addToWishlist(product);
+                        });
+                    }
+                }
+            });
+
+            function addToWishlist(productData) {
+                fetch('/add-to-wishlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(productData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response JSON:', data);
+                    if (data.success) {
+                        alert('Product added to wishlist successfully!');
+                    } else {
+                        alert('Failed to add product to wishlist.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var wishlistButtons = document.querySelectorAll('.wishlist-button');
+            
+            wishlistButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    this.textContent = 'Added';
+                    this.classList.add('added');
+
+                    setTimeout(() => {
+                        this.textContent = 'Add to Wishlist';
+                        this.classList.remove('added');
+                    }, 1000);
+                });
+            });
+        });
+    </script>
+    {% endif %}
+    
 </body>
 </html>
