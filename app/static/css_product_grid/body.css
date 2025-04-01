@@ -33,3 +33,10 @@ h1 {
     display: flex;
     gap: 20px;
 }
+
+.top-right-div {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px;
+}

@@ -1,0 +1,36 @@
+{
+  "general_details": {
+    "path_to_service_key": "./disc-golf-lut-5b8b32c6e4d4.json",
+    "project_id": "disc-golf-lut",
+    "region": "europe-west1"
+  },
+  "enable_google_apis": {
+    "services": [
+      "appengine.googleapis.com",
+      "storage.googleapis.com",
+      "sqladmin.googleapis.com",
+      "secretmanager.googleapis.com"
+    ]
+  },
+  "appengine_service_account": {
+    "service_account_display_name": "appengine-runtime-sa",
+    "service_account_roles": ["roles/storage.admin"]
+  },
+  "appengine_bucket": {
+    "bucket_name": "lut-disc-project-appengine-assets",
+    "bucket_location": "EU"
+  },
+  "appengine_versions": [
+    {
+      "version_id": "v5",
+      "repository_name": "app",
+      "service": "default",
+      "object_name": "app",
+      "runtime": "python39",
+      "shell": "gunicorn -b :$PORT main:app",
+      "port": "8080",
+      "instance_class": "F1",
+      "delete_service_on_destroy": false
+    }
+  ]
+}

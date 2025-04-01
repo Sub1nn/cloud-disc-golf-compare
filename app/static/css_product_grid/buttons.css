@@ -1,23 +1,31 @@
-button {
+/* Generic button styling */
+.custombutton {
     background: linear-gradient(135deg, #228B22 0%, #006400 100%);
     border: none;
     color: white;
     padding: 10px 20px;
-    text-decoration: none;
     font-size: 1em;
     cursor: pointer;
     border-radius: 20px;
     transition: all 0.3s ease;
     box-shadow: 0px 4px 10px rgba(34, 139, 34, 0.4);
+    text-decoration: none;
+    font-weight: bold;
 }
 
-button:hover {
+.custombutton:hover {
     background: linear-gradient(135deg, #006400 0%, #004d00 100%);
     transform: scale(1.03);
     box-shadow: 0px 8px 15px rgba(0, 100, 0, 0.6);
 }
 
-button:focus {
+.custombutton:focus {
     outline: none;
     box-shadow: 0px 0px 0px 4px rgba(34, 139, 34, 0.4);
+}
+
+/* Specific styling for the "Added" state on the wishlist button */
+.wishlist-button.added {
+    background: linear-gradient(135deg, #91c88e 0%, #76b376 100%);
+    /* Alternatively, you can simply use a solid color instead of a gradient */
 }
