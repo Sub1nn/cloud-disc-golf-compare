@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disc Golf Master - Profile</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/body.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/cards.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/info_popup.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='profile/pagination_profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css_product_grid/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='profile/cards.css') }}">
+</head>
+
+<body>
+    <h1 style="text-align: center;"><a href="/products" class="card-link">Disc Golf Master</a></h1>
+
+    <div class="center-containers-page">
+        <button id="infoButton" class="custombutton" style="margin-bottom: 20px;">Information</button>
+    </div>
+    <div id="infoBackdrop">
+        <div class="popupContent">
+            <span id="popupClose">&times;</span>
+            <h3>Information</h3>
+            <p>This page is part of a project at LUT University, within the scope of the CT70A9700 Cloud Services and Infrastructure course.</p>
+        </div>
+    </div>
+
+    <div class="top-right-div">
+        <a href="/products"><button type="button" class="custombutton">Products</button></a>
+        <a href="/logout"><button type="button" class="custombutton">Log Out</button></a>
+    </div>
+
+    <div class="container-profile" id="container1">
+        <div class="profile-box">
+            <p>{{ user.email }}</p>
+            <img src="{{ user.picture }}" alt="Profile Picture">
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="container" id="container1">
+            {% for product in products %}
+                <div class="card">
+                    <a href="{{ product.link_to_disc }}" class="card-link">
+                        <img src="{{ product.image_url }}" alt="{{ product.title }}" onerror="this.src='/static/placeholder.svg';">
+                        <h2>{{ product.title }}</h2>
+                        <h3>Price: {{ product.price }}{{ product.currency }}</h3>
+            
+                        {% if product.speed is not none or product.glide is not none or product.turn is not none or product.fade is not none %}
+                        <div class="flight-ratings">
+                            <strong>Flight Ratings:</strong><br>
+                            Speed: <span class="speed">{{ product.speed if product.speed is not none else 'N/A' }}</span>, 
+                            Glide: <span class="glide">{{ product.glide if product.glide is not none else 'N/A' }}</span>, 
+                            Turn: <span class="turn">{{ product.turn if product.turn is not none else 'N/A' }}</span>, 
+                            Fade: <span class="fade">{{ product.fade if product.fade is not none else 'N/A' }}</span>
+                        </div>
+                        {% endif %}
+
+                        <p>Store: {{ product.store }}</p>
+                    </a>
+                    <button class="custombutton wishlist-button">Remove from Wishlist</button>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="pagination-wrapper">
+        <div class="pagination-container" id="container2">
+            <div class="pagination">
+                {% set query_without_page = request.args.to_dict(flat=False) %}
+                {% if 'page' in query_without_page %}
+                    {% set _ = query_without_page.pop('page') %}
+                {% endif %}
+                
+                {% if page > 1 %}
+                    <a href="{{ url_for('profile', **dict(query_without_page, page=page-1)) }}" class="pagination-link">« Previous</a>
+                {% endif %}
+            
+                {% for p in pages_to_display %}
+                    {% if p == page %}
+                        <span class="pagination-link current">{{ p }}</span>
+                    {% else %}
+                        <a href="{{ url_for('profile', **dict(query_without_page, page=p)) }}" class="pagination-link">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+            
+                {% if page < total_pages %}
+                    <a href="{{ url_for('profile', **dict(query_without_page, page=page+1)) }}" class="pagination-link">Next »</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function centerContainer2() {
+            requestAnimationFrame(() => {
+                const container1 = document.getElementById('container1');
+                const container2 = document.getElementById('container2');
+                if (container1 && container2) {
+                    const rect1 = container1.getBoundingClientRect();
+                    const centerX = rect1.left + rect1.width / 2;
+                    const container2Width = container2.offsetWidth;
+                    container2.style.left = `${Math.round(centerX - container2Width / 2)}px`;
+                }
+            });
+        }
+    
+        window.addEventListener('load', centerContainer2);
+        window.addEventListener('resize', centerContainer2);
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const products = {{ products | tojson | safe }};
+    
+            function formatNumber(number) {
+                if (number === null || number === undefined) {
+                    return "N/A"; 
+                }
+                return number % 1 === 0 ? number.toFixed(0) : number.toFixed(1);
+            }
+    
+            Array.from(document.querySelectorAll('.card')).forEach((card, index) => {
+                const product = products[index];
+                if (product) {
+                    const speedElem = card.querySelector('.speed');
+                    const glideElem = card.querySelector('.glide');
+                    const turnElem = card.querySelector('.turn');
+                    const fadeElem = card.querySelector('.fade');
+    
+                    if (speedElem) speedElem.textContent = formatNumber(product.speed);
+                    if (glideElem) glideElem.textContent = formatNumber(product.glide);
+                    if (turnElem) turnElem.textContent = formatNumber(product.turn);
+                    if (fadeElem) fadeElem.textContent = formatNumber(product.fade);
+    
+                    const wishlistButton = card.querySelector('.wishlist-button');
+                    if (wishlistButton) {
+                        wishlistButton.addEventListener('click', function() {
+                            removeFromWishlist(product, card, wishlistButton);
+                        });
+                    }
+                }
+            });
+    
+            function removeFromWishlist(productData, card, button) {
+                fetch('/remove-from-wishlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(productData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response JSON:', data);
+                    if (data.success) {
+                        console.log('Product removed from wishlist successfully!');
+                    } else {
+                        console.log('Failed to remove product from wishlist.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+    </script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const infoButton = document.getElementById('infoButton');
+            const infoBackdrop = document.getElementById('infoBackdrop');
+            const popupClose = document.getElementById('popupClose');
+    
+            infoButton.addEventListener('click', () => {
+                infoBackdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+    
+            popupClose.addEventListener('click', () => {
+                infoBackdrop.classList.remove('active');
+                setTimeout(() => {
+                    document.body.style.overflow = '';
+                }, 300); 
+            });
+    
+            infoBackdrop.addEventListener('click', (event) => {
+                if (event.target === infoBackdrop) {
+                    popupClose.click();
+                }
+            });
+        });
+    </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var wishlistButtons = document.querySelectorAll('.wishlist-button');
+            
+            wishlistButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    this.textContent = 'Removed';
+                    this.classList.add('removed');
+    
+                    var card = this.closest('.card');
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s ease';
+                        card.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            card.remove();
+    
+                            if (document.querySelectorAll('.card').length === 0) {
+                                var paginationWrapper = document.querySelector('.pagination-wrapper');
+                                if (paginationWrapper) {
+                                    paginationWrapper.style.display = 'none';
+                                }
+                            }
+                        }, 300);
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

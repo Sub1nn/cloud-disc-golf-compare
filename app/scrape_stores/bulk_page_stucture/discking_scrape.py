@@ -1,5 +1,6 @@
 import sys
 import os
+import hashlib
 
 from bs4 import BeautifulSoup
 from xml.etree import ElementTree as ET
@@ -80,6 +81,12 @@ def get_data_discking():
                 'store': "kiekkokingi.fi"
             }
 
+            combined = f"{result.get('title')}_{result.get('store')}"
+            combined = combined.lower().replace(' ', '')
+            unique_id = hashlib.sha256(combined.encode()).hexdigest()
+
+            result["unique_id"] = unique_id
+
             all_products.append(result)
 
         url_placeholder = url_placeholder + 1
@@ -93,9 +100,10 @@ def get_data_discking():
             with connection.cursor() as cursor:
 
                 sql = """
-                INSERT INTO product_table (title, price, currency, speed, glide, turn, fade, link_to_disc, image_url, store)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO product_table (unique_id, title, price, currency, speed, glide, turn, fade, link_to_disc, image_url, store)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
+                unique_id = VALUES(unique_id),
                 price = VALUES(price),
                 currency = VALUES(currency),
                 speed = VALUES(speed),
@@ -108,6 +116,7 @@ def get_data_discking():
                 
                 data = [
                     (
+                        product['unique_id'],
                         product['title'],
                         product['price'],
                         product['currency'],
@@ -128,3 +137,5 @@ def get_data_discking():
         finally:
 
             connection.close()
+
+get_data_discking()

@@ -1,22 +1,18 @@
 import sys
 import os
-import requests
 import hashlib
+import requests
 
 from bs4 import BeautifulSoup
 from xml.etree import ElementTree as ET
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
-target_directory_name = 'cloud-disc-golf-compare'
-while current_directory:
-    sys.path.append(current_directory)
-    if os.path.basename(current_directory) == target_directory_name:
-        break
-    current_directory = os.path.dirname(current_directory)
+app_directory = os.path.abspath(os.path.join(current_directory, '..', '..'))
+sys.path.append(app_directory)
 
 from handle_db_connections import create_conn
 
-def get_data_par3():
+def get_data_diskiundiskicesis():
 
     url_placeholder = 1
 
@@ -24,10 +20,10 @@ def get_data_par3():
 
         all_products = []
 
-        print("getting par3 page")
+        print("getting diskiundiski page")
 
-        page_url = f"https://www.par3.lv/collections/disku-golfa-diski?page={url_placeholder}"
-        
+        page_url = f"https://diskiundiski.lv/collections/all?page={url_placeholder}"
+
         response = requests.get(page_url)
 
         html_content = response.text
@@ -36,55 +32,57 @@ def get_data_par3():
 
         ############################################################################################
 
-        parent_div = soup.find('product-list', class_="product-list")
+        products = soup.find_all('div', class_='o-layout__item u-1/2 u-1/3@tab u-1/4-grid-desk')
 
-        if not parent_div:
+        if products == []:
             break
-
-        products = parent_div.find_all('product-card', recursive=False)
 
         for product in products:
 
-            title = product.find('span', class_="product-card__title").get_text(strip=True)
+            title = product.find('product-card-title').get_text().split('/')[0].rstrip()
 
-            if product.find('sale-price') is not None:
-                price_element = product.find('sale-price')
-                price_element = price_element.contents[-1].strip()
-
+            price_element = product.find('span', class_='money').get_text()
             numeric_value = ''.join([char for char in price_element if char.isdigit() or char == ',' or char == '.'])
-            currency_symbol = ''.join([char for char in price_element if not char.isdigit() and char != ',' and char != '.'])
+            currency_symbol = ''.join([char for char in price_element if not char.isdigit() and char != ',' and char != '.']).lstrip()
             amount = float(numeric_value.replace(",", "."))
 
             flight_ratings = {}
-            spec_card = product.find('div', class_='specs_card')
+            if '/' in product.find('product-card-title').get_text():
+                name_parts = product.find('product-card-title').get_text().split('/')
+                if len(name_parts) > 1:
+                    flight_rating_elements = name_parts[-1].strip().split(' ')
+                    flight_ratings['Speed'] = flight_rating_elements[0] 
+                    flight_ratings['Glide'] = flight_rating_elements[1] 
+                    flight_ratings['Turn'] = flight_rating_elements[2] 
+                    flight_ratings['Fade'] = flight_rating_elements[3] 
 
-            if spec_card:
-                text_content = spec_card.get_text(strip=True)
-                flight_rating_element = [element.strip() for element in text_content.split('|')]
-                flight_ratings['Speed'] = flight_rating_element[0]
-                flight_ratings['Glide'] = flight_rating_element[1]
-                flight_ratings['Turn'] = flight_rating_element[2]
-                flight_ratings['Fade'] = flight_rating_element[3]
+                    if flight_ratings.get('Glide') == '|':
+                        flight_rating_elements = name_parts[-1].strip().split('|')
+                        flight_ratings['Speed'] = flight_rating_elements[0] 
+                        flight_ratings['Glide'] = flight_rating_elements[1] 
+                        flight_ratings['Turn'] = flight_rating_elements[2] 
+                        flight_ratings['Fade'] = flight_rating_elements[3] 
+
+                    if ',' in flight_ratings.get('Speed'):
+                        flight_ratings['Speed'] = flight_ratings.get('Speed').replace(',', '.')
+                    if ',' in flight_ratings.get('Glide'):
+                        flight_ratings['Glide'] = flight_ratings.get('Glide').replace(',', '.')
+                    if ',' in flight_ratings.get('Turn'):
+                        flight_ratings['Turn'] = flight_ratings.get('Turn').replace(',', '.')
+                    if ',' in flight_ratings.get('Fade'):
+                        flight_ratings['Fade'] = flight_ratings.get('Fade').replace(',', '.')
+
             else:
                 flight_ratings['Speed'] = None
                 flight_ratings['Glide'] = None
                 flight_ratings['Turn'] = None
                 flight_ratings['Fade'] = None
 
-            if flight_ratings.get('Speed') == '':
-                flight_ratings['Speed'] = None
-            if flight_ratings.get('Glide') == '':
-                flight_ratings['Glide'] = None
-            if flight_ratings.get('Turn') == '':
-                flight_ratings['Turn'] = None
-            if flight_ratings.get('Fade') == '':
-                flight_ratings['Fade'] = None
+            link_to_disc = "https://diskiundiski.lv" + product.find('a')['href']
 
-            link_to_disc_element = product.find('a')
-            link_to_disc = "https://par3.lv" + link_to_disc_element['href'] if link_to_disc_element else 'No link found'
+            image_url = "https://" + product.find("img", class_="product-card__img")['src'].replace("//", "")
 
-            images = product.find('div', class_="product-card__figure")
-            image_url = "https://" + images.find_all("img")[0]["src"].replace("//", "")
+            ############################################################################################
 
             result = {
                 'title': title,
@@ -93,7 +91,7 @@ def get_data_par3():
                 'flight_ratings': flight_ratings,
                 'link_to_disc': link_to_disc,
                 'image_url': image_url,
-                'store': "par3.lv"
+                'store': "diskiundiski.lv"
             }
 
             combined = f"{result.get('title')}_{result.get('store')}"
@@ -153,4 +151,4 @@ def get_data_par3():
             
             connection.close()
 
-get_data_par3()
+get_data_diskiundiskicesis()
