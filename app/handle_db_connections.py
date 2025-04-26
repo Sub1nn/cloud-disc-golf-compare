@@ -1,5 +1,5 @@
 import pymysql
-from handle_credentials import get_secret
+from app.handle_credentials import get_secret
 
 def create_conn():
     connection = pymysql.connect(

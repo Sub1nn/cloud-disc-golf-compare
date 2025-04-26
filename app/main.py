@@ -1,10 +1,12 @@
+
 import json
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 from flask_oauthlib.client import OAuth
-from handle_credentials import get_secret
-from handle_db_connections import create_conn, execute_insert, execute_select
+from app.handle_credentials import get_secret
+from app.handle_db_connections import create_conn, read_query
 
-app = Flask(__name__)
+
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
 app.secret_key = 'random_secret_key'
 app.config['GOOGLE_ID'] = get_secret("google_id")
